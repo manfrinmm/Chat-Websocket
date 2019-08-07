@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
+
+    <title>Webscoket</title>
+  </head>
+  <body>
+    <div id="content">
+      <header>
+        <div id="status"></div>
+        Status
+      </header>
+
+      <section>
+        <ul>
+          <li></li>
+        </ul>
+      </section>
+      <footer>
+        <textarea placeholder="Digite seu texto aqui"></textarea>
+      </footer>
+    </div>
+  </body>
+
+  <!-- Adicionar algumas funções que o browser não suporta -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js"></script>
+  <!-- Cliente do adnonis  -> usado para não haver problemas de comunicação-->
+  <script src="https://unpkg.com/@adonisjs/websocket-client@1.0.9/dist/Ws.browser.js"></script>
+
+  <script>
+    //Conecta com o servidor
+    let ws = adonis.Ws("ws://127.0.0.1:3333").connect();
+
+    const status = document.getElementById("status");
+
+    //Evento assim que abre
+    ws.on("open", () => {
+      status.classList.add("online");
+    });
+
+    //Erro de conexão
+    ws.on("error", () => {
+      status.classList.remove("online");
+    });
+
+    //Fecha
+    ws.on("close", () => {
+      status.classList.remove("online");
+    });
+
+    //pega o nome
+    const name = new URLSearchParams(window.location.search).get("name");
+
+    //se inscreve no canal
+    const chat = ws.subscribe("chat");
+
+    const textarea = document.querySelector("textarea");
+    const messageBox = document.querySelector("ul");
+    const section = document.querySelector("section");
+
+    textarea.addEventListener("keypress", e => {
+      if (e.code === "Enter") {
+        e.preventDefault();
+
+        chat.emit("message", { text: textarea.value, name });
+        textarea.value = "";
+      }
+    });
+
+    chat.on("message", data => {
+      const li = document.createElement("li");
+
+      li.innerHTML = `<b>${data.name}</b> ${data.text}`;
+
+      messageBox.appendChild(li);
+      // console.log(data);
+
+      section.scrollTo = section.scrollHeight; //scroll sempre abaixo
+    });
+  </script>
+</html>
